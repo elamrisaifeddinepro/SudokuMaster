@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { cloneGrid, createMockGrid } from '@/features/sudoku/model/gridFactory';
+import { getConflictKeys } from '@/features/sudoku/model/sudokuValidator';
 import type { Cell, Digit, Position, SudokuGrid } from '@/features/sudoku/model/types';
 
 type UseSudokuGameReturn = {
   grid: SudokuGrid;
   selected: Position | null;
+  conflicts: Set<string>;
   selectCell: (cell: Cell) => void;
   setDigit: (digit: Digit) => void;
   clearCell: () => void;
@@ -19,6 +21,8 @@ export default function useSudokuGame(): UseSudokuGameReturn {
   const initialGrid = useMemo(() => createMockGrid(), []);
   const [grid, setGrid] = useState<SudokuGrid>(initialGrid);
   const [selected, setSelected] = useState<Position | null>(null);
+
+  const conflicts = useMemo(() => getConflictKeys(grid), [grid]);
 
   const selectCell = (cell: Cell) => {
     setSelected({ row: cell.row, col: cell.col });
@@ -72,5 +76,5 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, grid]);
 
-  return { grid, selected, selectCell, setDigit, clearCell };
+  return { grid, selected, conflicts, selectCell, setDigit, clearCell };
 }

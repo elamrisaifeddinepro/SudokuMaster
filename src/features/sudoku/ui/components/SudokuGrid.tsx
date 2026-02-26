@@ -4,6 +4,7 @@ import SudokuCell from './SudokuCell';
 type Props = {
   grid: SudokuGrid;
   selected?: Position | null;
+  conflicts?: Set<string>;
   onCellClick?: (cell: Cell) => void;
 };
 
@@ -15,16 +16,19 @@ function borderClasses(row: number, col: number) {
   return [top, left, right, bottom, 'border-slate-600'].filter(Boolean).join(' ');
 }
 
-export default function SudokuGrid({ grid, selected, onCellClick }: Props) {
+export default function SudokuGrid({ grid, selected, conflicts, onCellClick }: Props) {
+  const key = (r: number, c: number) => `${r}-${c}`;
+
   return (
     <div className="inline-block rounded-xl bg-slate-950 p-2 border border-slate-800">
       <div className="grid grid-cols-9 gap-0">
         {grid.flat().map((cell) => {
           const isSelected = !!selected && cell.row === selected.row && cell.col === selected.col;
+          const isError = !!conflicts && conflicts.has(key(cell.row, cell.col));
 
           return (
             <div key={`${cell.row}-${cell.col}`} className={borderClasses(cell.row, cell.col)}>
-              <SudokuCell cell={cell} isSelected={isSelected} onClick={onCellClick} />
+              <SudokuCell cell={cell} isSelected={isSelected} isError={isError} onClick={onCellClick} />
             </div>
           );
         })}

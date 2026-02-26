@@ -3,11 +3,18 @@ import type { Cell } from '@/features/sudoku/model/types';
 type Props = {
   cell: Cell;
   isSelected?: boolean;
+  isError?: boolean;
   onClick?: (cell: Cell) => void;
 };
 
-export default function SudokuCell({ cell, isSelected = false, onClick }: Props) {
+export default function SudokuCell({ cell, isSelected = false, isError = false, onClick }: Props) {
   const isGiven = cell.given;
+
+  const ringClass = isError
+    ? 'ring-2 ring-red-400'
+    : isSelected
+      ? 'ring-2 ring-cyan-400'
+      : '';
 
   return (
     <button
@@ -17,9 +24,8 @@ export default function SudokuCell({ cell, isSelected = false, onClick }: Props)
         'h-10 w-10 sm:h-12 sm:w-12',
         'flex items-center justify-center',
         'text-sm sm:text-base',
-        'border border-slate-800',
         'transition',
-        isSelected ? 'ring-2 ring-cyan-400 ring-offset-0' : '',
+        ringClass,
         isGiven
           ? 'bg-slate-800 text-slate-100 font-bold'
           : 'bg-slate-900 text-slate-300 hover:bg-slate-800/40',
