@@ -1,4 +1,4 @@
-import type { Cell, CellValue, ColIndex, RowIndex, SudokuGrid } from './types';
+import type { Cell, CellValue, ColIndex, Digit, RowIndex, SudokuGrid } from './types';
 
 const ROWS: RowIndex[] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 const COLS: ColIndex[] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
@@ -10,14 +10,13 @@ export function createEmptyGrid(): SudokuGrid {
       col: c,
       value: null,
       given: false,
+      cornerNotes: [],
+      centerNotes: [],
     }))
   );
 }
 
-/**
- * Grille "mock" (quelques valeurs fixes) pour tester l’affichage.
- * Le vrai générateur viendra plus tard.
- */
+/** Grille mock pour tester l’UI (le vrai générateur viendra plus tard) */
 export function createMockGrid(): SudokuGrid {
   const grid = createEmptyGrid();
 
@@ -37,11 +36,15 @@ function setCellValue(
   value: Exclude<CellValue, null>,
   given: boolean
 ) {
-  const cell: Cell = { ...grid[row][col], value, given };
+  const current = grid[row][col];
+  const cell: Cell = { ...current, value, given, cornerNotes: [], centerNotes: [] };
   grid[row][col] = cell;
 }
 
-/** Copie immuable d’une grille (utile pour React state plus tard) */
 export function cloneGrid(grid: SudokuGrid): SudokuGrid {
-  return grid.map((row) => row.map((cell) => ({ ...cell })));
+  return grid.map((row) => row.map((cell) => ({ ...cell, cornerNotes: [...cell.cornerNotes], centerNotes: [...cell.centerNotes] })));
+}
+
+export function sortDigits(digits: Digit[]): Digit[] {
+  return [...digits].sort((a, b) => a - b);
 }
