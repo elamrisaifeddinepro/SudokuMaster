@@ -9,6 +9,9 @@ type Props = {
   timerRunning: boolean;
   onToggleTimer: () => void;
   onResetTimer: () => void;
+
+  onSave: () => void;
+  onLoad: () => void;
 };
 
 function btn(base: string, disabled?: boolean) {
@@ -28,11 +31,13 @@ export default function ControlPanel({
   timerRunning,
   onToggleTimer,
   onResetTimer,
+  onSave,
+  onLoad,
 }: Props) {
   return (
     <section className="w-full rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
       <h2 className="text-lg font-semibold">Controls</h2>
-      <p className="mt-1 text-sm text-slate-400">New game, undo/redo, timer.</p>
+      <p className="mt-1 text-sm text-slate-400">New game, undo/redo, timer, save/load.</p>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
         <button type="button" onClick={onUndo} disabled={!canUndo} className={btn('bg-slate-950/50 text-slate-100', !canUndo)}>
@@ -55,6 +60,15 @@ export default function ControlPanel({
         </button>
         <button type="button" onClick={onResetTimer} className={btn('bg-slate-950/50 text-slate-100')}>
           Reset Timer
+        </button>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <button type="button" onClick={onSave} className={btn('bg-emerald-500/10 text-emerald-200')}>
+          Save
+        </button>
+        <button type="button" onClick={onLoad} className={btn('bg-amber-500/10 text-amber-200')}>
+          Load
         </button>
       </div>
     </section>

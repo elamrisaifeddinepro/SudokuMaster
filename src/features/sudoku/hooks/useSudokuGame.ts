@@ -3,6 +3,7 @@ import { cloneGrid, createMockGrid, sortDigits } from '@/features/sudoku/model/g
 import { getConflictKeys } from '@/features/sudoku/model/sudokuValidator';
 import type { Cell, Digit, NotationMode, Position, SudokuGrid } from '@/features/sudoku/model/types';
 import useGameTimer from './useGameTimer';
+import { downloadJson, parseSavedGame, pickJsonFile, type SavedGame } from '@/features/sudoku/services/fileManager';
 
 type GridHistoryState = {
   grid: SudokuGrid;
@@ -18,34 +19,20 @@ type GridAction =
 
 function gridReducer(state: GridHistoryState, action: GridAction): GridHistoryState {
   switch (action.type) {
-    case 'APPLY': {
-      return {
-        grid: action.next,
-        past: [...state.past, state.grid],
-        future: [],
-      };
-    }
+    case 'APPLY':
+      return { grid: action.next, past: [...state.past, state.grid], future: [] };
     case 'UNDO': {
       if (state.past.length === 0) return state;
       const prev = state.past[state.past.length - 1];
-      return {
-        grid: prev,
-        past: state.past.slice(0, -1),
-        future: [state.grid, ...state.future],
-      };
+      return { grid: prev, past: state.past.slice(0, -1), future: [state.grid, ...state.future] };
     }
     case 'REDO': {
       if (state.future.length === 0) return state;
       const next = state.future[0];
-      return {
-        grid: next,
-        past: [...state.past, state.grid],
-        future: state.future.slice(1),
-      };
+      return { grid: next, past: [...state.past, state.grid], future: state.future.slice(1) };
     }
-    case 'RESET': {
+    case 'RESET':
       return { grid: action.next, past: [], future: [] };
-    }
     default:
       return state;
   }
@@ -59,26 +46,25 @@ type UseSudokuGameReturn = {
   mode: NotationMode;
   setMode: (m: NotationMode) => void;
 
-  // History
   canUndo: boolean;
   canRedo: boolean;
   undo: () => void;
   redo: () => void;
 
-  // New Game
   newGame: () => void;
 
-  // Timer
   timerSeconds: number;
   timerRunning: boolean;
   pauseTimer: () => void;
   startTimer: () => void;
   resetTimer: () => void;
 
-  // Input
   selectCell: (cell: Cell) => void;
   inputDigit: (digit: Digit) => void;
   clearActive: () => void;
+
+  saveGame: () => void;
+  loadGame: () => Promise<void>;
 };
 
 function toggleDigit(list: Digit[], digit: Digit): Digit[] {
@@ -90,18 +76,12 @@ function toggleDigit(list: Digit[], digit: Digit): Digit[] {
 export default function useSudokuGame(): UseSudokuGameReturn {
   const initial = useMemo(() => createMockGrid(), []);
 
-  const [history, dispatch] = useReducer(gridReducer, {
-    grid: initial,
-    past: [],
-    future: [],
-  });
-
+  const [history, dispatch] = useReducer(gridReducer, { grid: initial, past: [], future: [] });
   const [selected, setSelected] = useState<Position | null>(null);
   const [mode, setMode] = useState<NotationMode>('value');
 
   const conflicts = useMemo(() => getConflictKeys(history.grid), [history.grid]);
 
-  // Timer
   const timer = useGameTimer();
 
   const canUndo = history.past.length > 0;
@@ -118,9 +98,7 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     timer.start();
   }, [timer]);
 
-  const selectCell = useCallback((cell: Cell) => {
-    setSelected({ row: cell.row, col: cell.col });
-  }, []);
+  const selectCell = useCallback((cell: Cell) => setSelected({ row: cell.row, col: cell.col }), []);
 
   const inputDigit = useCallback(
     (digit: Digit) => {
@@ -133,17 +111,11 @@ export default function useSudokuGame(): UseSudokuGameReturn {
       const cell = next[selected.row][selected.col];
 
       if (mode === 'value') {
-        next[selected.row][selected.col] = {
-          ...cell,
-          value: digit,
-          cornerNotes: [],
-          centerNotes: [],
-        };
+        next[selected.row][selected.col] = { ...cell, value: digit, cornerNotes: [], centerNotes: [] };
         dispatch({ type: 'APPLY', next });
         return;
       }
 
-      // si valeur existe, on ne change pas les notes
       if (cell.value !== null) return;
 
       if (mode === 'corner') {
@@ -172,7 +144,6 @@ export default function useSudokuGame(): UseSudokuGameReturn {
       dispatch({ type: 'APPLY', next });
       return;
     }
-
     if (mode === 'corner') {
       next[selected.row][selected.col] = { ...cell, cornerNotes: [] };
       dispatch({ type: 'APPLY', next });
@@ -182,6 +153,38 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     next[selected.row][selected.col] = { ...cell, centerNotes: [] };
     dispatch({ type: 'APPLY', next });
   }, [history.grid, selected, mode]);
+
+  // Save/Load
+  const saveGame = useCallback(() => {
+    const payload: SavedGame = {
+      version: 1,
+      savedAt: new Date().toISOString(),
+      grid: history.grid,
+      mode,
+      timerSeconds: timer.seconds,
+    };
+
+    const filename = `sudoku-save-${Date.now()}.json`;
+    downloadJson(filename, payload);
+  }, [history.grid, mode, timer.seconds]);
+
+  const loadGame = useCallback(async () => {
+    const raw = await pickJsonFile();
+    if (!raw) return;
+
+    const parsed = parseSavedGame(raw);
+    dispatch({ type: 'RESET', next: parsed.grid });
+    setMode(parsed.mode);
+    setSelected(null);
+
+    timer.pause();
+    timer.reset();
+    // remettre le timer à parsed.timerSeconds :
+    // (simple workaround: incrémenter via setState direct n’existe pas ici,
+    // donc on ajoute une méthode setSeconds au timer au prochain jour si besoin)
+    // Pour Jour 9, on repart de 0 après load (stable et build OK).
+    timer.start();
+  }, [timer]);
 
   // Clavier
   useEffect(() => {
@@ -224,22 +227,20 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     conflicts,
     mode,
     setMode,
-
     canUndo,
     canRedo,
     undo,
     redo,
-
     newGame,
-
     timerSeconds: timer.seconds,
     timerRunning: timer.isRunning,
     pauseTimer: timer.pause,
     startTimer: timer.start,
     resetTimer: timer.reset,
-
     selectCell,
     inputDigit,
     clearActive,
+    saveGame,
+    loadGame,
   };
 }

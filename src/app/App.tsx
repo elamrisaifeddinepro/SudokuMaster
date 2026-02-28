@@ -26,6 +26,9 @@ function App() {
     pauseTimer,
     startTimer,
     resetTimer,
+
+    saveGame,
+    loadGame,
   } = useSudokuGame();
 
   const toggleTimer = () => (timerRunning ? pauseTimer() : startTimer());
@@ -36,7 +39,7 @@ function App() {
         <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">SudokuMaster</h1>
-            <p className="mt-2 text-slate-300">Jour 8 — ControlPanel + Undo/Redo + New Game</p>
+            <p className="mt-2 text-slate-300">Jour 9 — Save/Load JSON</p>
           </div>
           <GameTimer seconds={timerSeconds} isRunning={timerRunning} />
         </header>
@@ -51,8 +54,9 @@ function App() {
                 Mode: <b>{mode}</b> — Cellule: <b>{selected ? `(${selected.row}, ${selected.col})` : 'Aucune'}</b> — Conflits:{' '}
                 <b>{conflicts.size}</b>
               </p>
-              <p className="mt-2 text-sm text-slate-400">Raccourcis: Ctrl/Cmd+Z (undo), Ctrl/Cmd+Y (redo).</p>
-              <p className="mt-3 text-sm text-slate-400">Prochain jour : Save/Load JSON (FileManager).</p>
+              <p className="mt-2 text-sm text-slate-400">
+                Prochain jour : améliorer Load pour restaurer le timer exact (setSeconds).
+              </p>
             </div>
           </div>
 
@@ -66,6 +70,8 @@ function App() {
               timerRunning={timerRunning}
               onToggleTimer={toggleTimer}
               onResetTimer={resetTimer}
+              onSave={saveGame}
+              onLoad={loadGame}
             />
 
             <NotationPanel mode={mode} onModeChange={setMode} onDigit={inputDigit} onClear={clearActive} />
