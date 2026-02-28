@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { cloneGrid, createMockGrid, sortDigits } from '@/features/sudoku/model/gridFactory';
 import { getConflictKeys } from '@/features/sudoku/model/sudokuValidator';
 import type { Cell, Digit, NotationMode, Position, SudokuGrid } from '@/features/sudoku/model/types';
+import useGameTimer from './useGameTimer';
 
 type UseSudokuGameReturn = {
   grid: SudokuGrid;
@@ -10,6 +11,12 @@ type UseSudokuGameReturn = {
 
   mode: NotationMode;
   setMode: (m: NotationMode) => void;
+
+  timerSeconds: number;
+  timerRunning: boolean;
+  pauseTimer: () => void;
+  startTimer: () => void;
+  resetTimer: () => void;
 
   selectCell: (cell: Cell) => void;
   inputDigit: (digit: Digit) => void;
@@ -29,6 +36,9 @@ export default function useSudokuGame(): UseSudokuGameReturn {
   const [mode, setMode] = useState<NotationMode>('value');
 
   const conflicts = useMemo(() => getConflictKeys(grid), [grid]);
+
+  // Timer
+  const timer = useGameTimer();
 
   const selectCell = useCallback((cell: Cell) => {
     setSelected({ row: cell.row, col: cell.col });
@@ -55,7 +65,6 @@ export default function useSudokuGame(): UseSudokuGameReturn {
           return next;
         }
 
-        // Si une valeur existe, on ne modifie pas les notes
         if (cell.value !== null) return prev;
 
         if (mode === 'corner') {
@@ -118,5 +127,21 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [selected, inputDigit, clearActive]);
 
-  return { grid, selected, conflicts, mode, setMode, selectCell, inputDigit, clearActive };
+  return {
+    grid,
+    selected,
+    conflicts,
+    mode,
+    setMode,
+
+    timerSeconds: timer.seconds,
+    timerRunning: timer.isRunning,
+    pauseTimer: timer.pause,
+    startTimer: timer.start,
+    resetTimer: timer.reset,
+
+    selectCell,
+    inputDigit,
+    clearActive,
+  };
 }
