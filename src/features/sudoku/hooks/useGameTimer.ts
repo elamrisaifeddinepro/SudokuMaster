@@ -31,7 +31,6 @@ export default function useGameTimer(): TimerControls {
     }
 
     return () => clear();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning]);
 
   const start = () => setIsRunning(true);

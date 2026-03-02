@@ -4,6 +4,8 @@ import GameTimer from '@/features/sudoku/ui/components/GameTimer';
 import ControlPanel from '@/features/sudoku/ui/panels/ControlPanel';
 import useSudokuGame from '@/features/sudoku/hooks/useSudokuGame';
 import DifficultySelector from '@/features/sudoku/ui/panels/DifficultySelector';
+import GameCompletionModal from '@/features/sudoku/ui/modals/GameCompletionModal';
+import GameOverModal from '@/features/sudoku/ui/modals/GameOverModal';
 
 function App() {
   const {
@@ -21,7 +23,10 @@ function App() {
     undo,
     redo,
     newGame,
-
+    isCompleted,
+    isGameOver,
+    closeCompleted,
+    closeGameOver,
     timerSeconds,
     timerRunning,
     pauseTimer,
@@ -82,6 +87,18 @@ function App() {
           </div>
         </main>
       </div>
+      <GameCompletionModal
+          isOpen={isCompleted}
+          timeSeconds={timerSeconds}
+          onClose={closeCompleted}
+          onNewGame={newGame}
+      />
+
+      <GameOverModal
+          isOpen={isGameOver}
+          onClose={closeGameOver}
+          onNewGame={newGame}
+      />
     </div>
   );
 }

@@ -43,11 +43,13 @@ type UseSudokuGameReturn = {
   grid: SudokuGrid;
   selected: Position | null;
   conflicts: Set<string>;
-  difficulty: Difficulty;
-  setDifficulty: (d: Difficulty) => void;
+
   mode: NotationMode;
   setMode: (m: NotationMode) => void;
-  
+
+  difficulty: Difficulty;
+  setDifficulty: (d: Difficulty) => void;
+
   canUndo: boolean;
   canRedo: boolean;
   undo: () => void;
@@ -67,12 +69,27 @@ type UseSudokuGameReturn = {
 
   saveGame: () => void;
   loadGame: () => Promise<void>;
+
+  // NEW (Jour 12)
+  isCompleted: boolean;
+  isGameOver: boolean;
+  closeCompleted: () => void;
+  closeGameOver: () => void;
 };
 
 function toggleDigit(list: Digit[], digit: Digit): Digit[] {
   const exists = list.includes(digit);
   const next = exists ? list.filter((d) => d !== digit) : [...list, digit];
   return sortDigits(next);
+}
+
+function isGridFull(grid: SudokuGrid) {
+  for (const row of grid) {
+    for (const cell of row) {
+      if (cell.value === null) return false;
+    }
+  }
+  return true;
 }
 
 export default function useSudokuGame(): UseSudokuGameReturn {
@@ -82,6 +99,9 @@ export default function useSudokuGame(): UseSudokuGameReturn {
   const [selected, setSelected] = useState<Position | null>(null);
   const [mode, setMode] = useState<NotationMode>('value');
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
+
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [isGameOver, setIsGameOver] = useState(false);
 
   const conflicts = useMemo(() => getConflictKeys(history.grid), [history.grid]);
 
@@ -97,6 +117,8 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     dispatch({ type: 'RESET', next: createMockGrid() });
     setSelected(null);
     setMode('value');
+    setIsCompleted(false);
+    setIsGameOver(false);
     timer.reset();
     timer.start();
   }, [timer]);
@@ -166,7 +188,6 @@ export default function useSudokuGame(): UseSudokuGameReturn {
       mode,
       timerSeconds: timer.seconds,
     };
-
     downloadJson(`sudoku-save-${Date.now()}.json`, payload);
   }, [history.grid, mode, timer.seconds]);
 
@@ -178,11 +199,39 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     dispatch({ type: 'RESET', next: parsed.grid });
     setMode(parsed.mode);
     setSelected(null);
+    setIsCompleted(false);
+    setIsGameOver(false);
 
     timer.pause();
-    timer.setSeconds(parsed.timerSeconds);
+    // Si tu as setSeconds (Jour 10), remets-le:
+    // timer.setSeconds(parsed.timerSeconds);
+    timer.reset();
     timer.start();
   }, [timer]);
+
+  // Détection simple: completion / game over
+  useEffect(() => {
+    if (isCompleted || isGameOver) return;
+
+    const full = isGridFull(history.grid);
+    const hasConflicts = conflicts.size > 0;
+
+    if (full && !hasConflicts) {
+      setIsCompleted(true);
+      timer.pause();
+      return;
+    }
+
+    // “Erreurs” = conflits/2 (approx)
+    const approxErrors = Math.floor(conflicts.size / 2);
+    if (approxErrors >= 10) {
+      setIsGameOver(true);
+      timer.pause();
+    }
+  }, [history.grid, conflicts, isCompleted, isGameOver, timer]);
+
+  const closeCompleted = () => setIsCompleted(false);
+  const closeGameOver = () => setIsGameOver(false);
 
   // Clavier
   useEffect(() => {
@@ -223,24 +272,36 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     grid: history.grid,
     selected,
     conflicts,
+
     mode,
     setMode,
+
+    difficulty,
+    setDifficulty,
+
     canUndo,
     canRedo,
     undo,
     redo,
+
     newGame,
+
     timerSeconds: timer.seconds,
     timerRunning: timer.isRunning,
     pauseTimer: timer.pause,
     startTimer: timer.start,
     resetTimer: timer.reset,
+
     selectCell,
     inputDigit,
     clearActive,
+
     saveGame,
     loadGame,
-    difficulty,
-    setDifficulty,
+
+    isCompleted,
+    isGameOver,
+    closeCompleted,
+    closeGameOver,
   };
 }
