@@ -164,8 +164,7 @@ export default function useSudokuGame(): UseSudokuGameReturn {
       timerSeconds: timer.seconds,
     };
 
-    const filename = `sudoku-save-${Date.now()}.json`;
-    downloadJson(filename, payload);
+    downloadJson(`sudoku-save-${Date.now()}.json`, payload);
   }, [history.grid, mode, timer.seconds]);
 
   const loadGame = useCallback(async () => {
@@ -178,11 +177,7 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     setSelected(null);
 
     timer.pause();
-    timer.reset();
-    // remettre le timer à parsed.timerSeconds :
-    // (simple workaround: incrémenter via setState direct n’existe pas ici,
-    // donc on ajoute une méthode setSeconds au timer au prochain jour si besoin)
-    // Pour Jour 9, on repart de 0 après load (stable et build OK).
+    timer.setSeconds(parsed.timerSeconds);
     timer.start();
   }, [timer]);
 

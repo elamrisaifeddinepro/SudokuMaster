@@ -6,10 +6,11 @@ type TimerControls = {
   start: () => void;
   pause: () => void;
   reset: () => void;
+  setSeconds: (s: number) => void;
 };
 
 export default function useGameTimer(): TimerControls {
-  const [seconds, setSeconds] = useState(0);
+  const [seconds, _setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
   const intervalRef = useRef<number | null>(null);
 
@@ -25,7 +26,7 @@ export default function useGameTimer(): TimerControls {
 
     if (isRunning) {
       intervalRef.current = window.setInterval(() => {
-        setSeconds((s) => s + 1);
+        _setSeconds((s) => s + 1);
       }, 1000);
     }
 
@@ -35,7 +36,8 @@ export default function useGameTimer(): TimerControls {
 
   const start = () => setIsRunning(true);
   const pause = () => setIsRunning(false);
-  const reset = () => setSeconds(0);
+  const reset = () => _setSeconds(0);
+  const setSeconds = (s: number) => _setSeconds(Math.max(0, Math.floor(s)));
 
-  return { seconds, isRunning, start, pause, reset };
+  return { seconds, isRunning, start, pause, reset, setSeconds };
 }
