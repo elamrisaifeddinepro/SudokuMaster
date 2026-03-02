@@ -3,6 +3,7 @@ import NotationPanel from '@/features/sudoku/ui/panels/NotationPanel';
 import GameTimer from '@/features/sudoku/ui/components/GameTimer';
 import ControlPanel from '@/features/sudoku/ui/panels/ControlPanel';
 import useSudokuGame from '@/features/sudoku/hooks/useSudokuGame';
+import DifficultySelector from '@/features/sudoku/ui/panels/DifficultySelector';
 
 function App() {
   const {
@@ -29,6 +30,8 @@ function App() {
 
     saveGame,
     loadGame,
+    difficulty,
+    setDifficulty,
   } = useSudokuGame();
 
   const toggleTimer = () => (timerRunning ? pauseTimer() : startTimer());
@@ -61,6 +64,7 @@ function App() {
           </div>
 
           <div className="flex flex-col gap-6">
+            <DifficultySelector difficulty={difficulty} onChange={setDifficulty} />
             <ControlPanel
               canUndo={canUndo}
               canRedo={canRedo}

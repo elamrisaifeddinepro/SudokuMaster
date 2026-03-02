@@ -4,6 +4,7 @@ import { getConflictKeys } from '@/features/sudoku/model/sudokuValidator';
 import type { Cell, Digit, NotationMode, Position, SudokuGrid } from '@/features/sudoku/model/types';
 import useGameTimer from './useGameTimer';
 import { downloadJson, parseSavedGame, pickJsonFile, type SavedGame } from '@/features/sudoku/services/fileManager';
+import type { Difficulty } from '@/features/sudoku/ui/panels/DifficultySelector';
 
 type GridHistoryState = {
   grid: SudokuGrid;
@@ -42,10 +43,11 @@ type UseSudokuGameReturn = {
   grid: SudokuGrid;
   selected: Position | null;
   conflicts: Set<string>;
-
+  difficulty: Difficulty;
+  setDifficulty: (d: Difficulty) => void;
   mode: NotationMode;
   setMode: (m: NotationMode) => void;
-
+  
   canUndo: boolean;
   canRedo: boolean;
   undo: () => void;
@@ -79,6 +81,7 @@ export default function useSudokuGame(): UseSudokuGameReturn {
   const [history, dispatch] = useReducer(gridReducer, { grid: initial, past: [], future: [] });
   const [selected, setSelected] = useState<Position | null>(null);
   const [mode, setMode] = useState<NotationMode>('value');
+  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
 
   const conflicts = useMemo(() => getConflictKeys(history.grid), [history.grid]);
 
@@ -237,5 +240,7 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     clearActive,
     saveGame,
     loadGame,
+    difficulty,
+    setDifficulty,
   };
 }
