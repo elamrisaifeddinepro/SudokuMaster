@@ -5,6 +5,7 @@ import type { Cell, Digit, NotationMode, Position, SudokuGrid } from '@/features
 import useGameTimer from './useGameTimer';
 import { downloadJson, parseSavedGame, pickJsonFile, type SavedGame } from '@/features/sudoku/services/fileManager';
 import type { Difficulty } from '@/features/sudoku/ui/panels/DifficultySelector';
+import { addScore, clearScores, getTopScores, type LeaderboardEntry } from '@/features/sudoku/services/leaderboardLocal';
 
 type GridHistoryState = {
   grid: SudokuGrid;
@@ -70,11 +71,25 @@ type UseSudokuGameReturn = {
   saveGame: () => void;
   loadGame: () => Promise<void>;
 
-  // NEW (Jour 12)
+  // Jour 12 modals
   isCompleted: boolean;
   isGameOver: boolean;
   closeCompleted: () => void;
   closeGameOver: () => void;
+
+  // Jour 13
+  isPlayerNameOpen: boolean;
+  openPlayerName: () => void;
+  closePlayerName: () => void;
+  submitPlayerName: (name: string) => void;
+
+  isLeaderboardOpen: boolean;
+  leaderboard: LeaderboardEntry[];
+  openLeaderboard: () => void;
+  closeLeaderboard: () => void;
+  clearLeaderboard: () => void;
+
+  lastSavedName: string | null;
 };
 
 function toggleDigit(list: Digit[], digit: Digit): Digit[] {
@@ -103,6 +118,12 @@ export default function useSudokuGame(): UseSudokuGameReturn {
   const [isCompleted, setIsCompleted] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
 
+  const [isPlayerNameOpen, setIsPlayerNameOpen] = useState(false);
+  const [lastSavedName, setLastSavedName] = useState<string | null>(null);
+
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+
   const conflicts = useMemo(() => getConflictKeys(history.grid), [history.grid]);
 
   const timer = useGameTimer();
@@ -113,12 +134,18 @@ export default function useSudokuGame(): UseSudokuGameReturn {
   const undo = useCallback(() => dispatch({ type: 'UNDO' }), []);
   const redo = useCallback(() => dispatch({ type: 'REDO' }), []);
 
+  const refreshLeaderboard = useCallback(() => {
+    setLeaderboard(getTopScores(10));
+  }, []);
+
   const newGame = useCallback(() => {
     dispatch({ type: 'RESET', next: createMockGrid() });
     setSelected(null);
     setMode('value');
     setIsCompleted(false);
     setIsGameOver(false);
+    setIsPlayerNameOpen(false);
+    setLastSavedName(null);
     timer.reset();
     timer.start();
   }, [timer]);
@@ -201,15 +228,14 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     setSelected(null);
     setIsCompleted(false);
     setIsGameOver(false);
+    setLastSavedName(null);
 
     timer.pause();
-    // Si tu as setSeconds (Jour 10), remets-le:
-    // timer.setSeconds(parsed.timerSeconds);
     timer.reset();
     timer.start();
   }, [timer]);
 
-  // Détection simple: completion / game over
+  // Completion / GameOver detection
   useEffect(() => {
     if (isCompleted || isGameOver) return;
 
@@ -219,10 +245,11 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     if (full && !hasConflicts) {
       setIsCompleted(true);
       timer.pause();
+      // ouvrir le modal de nom pour enregistrer le score
+      setIsPlayerNameOpen(true);
       return;
     }
 
-    // “Erreurs” = conflits/2 (approx)
     const approxErrors = Math.floor(conflicts.size / 2);
     if (approxErrors >= 10) {
       setIsGameOver(true);
@@ -233,7 +260,29 @@ export default function useSudokuGame(): UseSudokuGameReturn {
   const closeCompleted = () => setIsCompleted(false);
   const closeGameOver = () => setIsGameOver(false);
 
-  // Clavier
+  // PlayerName modal
+  const openPlayerName = () => setIsPlayerNameOpen(true);
+  const closePlayerName = () => setIsPlayerNameOpen(false);
+
+  const submitPlayerName = (name: string) => {
+    addScore({ name, seconds: timer.seconds, difficulty });
+    setLastSavedName(name);
+    setIsPlayerNameOpen(false);
+    refreshLeaderboard();
+  };
+
+  // Leaderboard modal
+  const openLeaderboard = () => {
+    refreshLeaderboard();
+    setIsLeaderboardOpen(true);
+  };
+  const closeLeaderboard = () => setIsLeaderboardOpen(false);
+  const clearLeaderboard = () => {
+    clearScores();
+    refreshLeaderboard();
+  };
+
+  // Keyboard
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -303,5 +352,18 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     isGameOver,
     closeCompleted,
     closeGameOver,
+
+    isPlayerNameOpen,
+    openPlayerName,
+    closePlayerName,
+    submitPlayerName,
+
+    isLeaderboardOpen,
+    leaderboard,
+    openLeaderboard,
+    closeLeaderboard,
+    clearLeaderboard,
+
+    lastSavedName,
   };
 }

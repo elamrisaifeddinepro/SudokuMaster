@@ -2,10 +2,13 @@ import SudokuGrid from '@/features/sudoku/ui/components/SudokuGrid';
 import NotationPanel from '@/features/sudoku/ui/panels/NotationPanel';
 import GameTimer from '@/features/sudoku/ui/components/GameTimer';
 import ControlPanel from '@/features/sudoku/ui/panels/ControlPanel';
-import useSudokuGame from '@/features/sudoku/hooks/useSudokuGame';
 import DifficultySelector from '@/features/sudoku/ui/panels/DifficultySelector';
+import useSudokuGame from '@/features/sudoku/hooks/useSudokuGame';
+
 import GameCompletionModal from '@/features/sudoku/ui/modals/GameCompletionModal';
 import GameOverModal from '@/features/sudoku/ui/modals/GameOverModal';
+import PlayerNameModal from '@/features/sudoku/ui/modals/PlayerNameModal';
+import LeaderboardModal from '@/features/sudoku/ui/modals/LeaderboardModal';
 
 function App() {
   const {
@@ -23,10 +26,7 @@ function App() {
     undo,
     redo,
     newGame,
-    isCompleted,
-    isGameOver,
-    closeCompleted,
-    closeGameOver,
+
     timerSeconds,
     timerRunning,
     pauseTimer,
@@ -35,8 +35,26 @@ function App() {
 
     saveGame,
     loadGame,
+
     difficulty,
     setDifficulty,
+
+    isCompleted,
+    isGameOver,
+    closeCompleted,
+    closeGameOver,
+
+    isPlayerNameOpen,
+    closePlayerName,
+    submitPlayerName,
+
+    isLeaderboardOpen,
+    leaderboard,
+    openLeaderboard,
+    closeLeaderboard,
+    clearLeaderboard,
+
+    lastSavedName,
   } = useSudokuGame();
 
   const toggleTimer = () => (timerRunning ? pauseTimer() : startTimer());
@@ -47,7 +65,8 @@ function App() {
         <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">SudokuMaster</h1>
-            <p className="mt-2 text-slate-300">Jour 9 — Save/Load JSON</p>
+            <p className="mt-2 text-slate-300">Jour 13 — PlayerName + Leaderboard (local)</p>
+            {lastSavedName && <p className="mt-1 text-sm text-emerald-200">Score enregistré pour: {lastSavedName}</p>}
           </div>
           <GameTimer seconds={timerSeconds} isRunning={timerRunning} />
         </header>
@@ -59,17 +78,15 @@ function App() {
             <div className="w-full rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
               <h2 className="text-lg font-semibold">Infos</h2>
               <p className="mt-2 text-slate-300">
-                Mode: <b>{mode}</b> — Cellule: <b>{selected ? `(${selected.row}, ${selected.col})` : 'Aucune'}</b> — Conflits:{' '}
-                <b>{conflicts.size}</b>
-              </p>
-              <p className="mt-2 text-sm text-slate-400">
-                Prochain jour : améliorer Load pour restaurer le timer exact (setSeconds).
+                Mode: <b>{mode}</b> — Difficulty: <b>{difficulty}</b> — Cellule:{' '}
+                <b>{selected ? `(${selected.row}, ${selected.col})` : 'Aucune'}</b> — Conflits: <b>{conflicts.size}</b>
               </p>
             </div>
           </div>
 
           <div className="flex flex-col gap-6">
             <DifficultySelector difficulty={difficulty} onChange={setDifficulty} />
+
             <ControlPanel
               canUndo={canUndo}
               canRedo={canRedo}
@@ -81,23 +98,24 @@ function App() {
               onResetTimer={resetTimer}
               onSave={saveGame}
               onLoad={loadGame}
+              onOpenLeaderboard={openLeaderboard}
             />
 
             <NotationPanel mode={mode} onModeChange={setMode} onDigit={inputDigit} onClear={clearActive} />
           </div>
         </main>
       </div>
-      <GameCompletionModal
-          isOpen={isCompleted}
-          timeSeconds={timerSeconds}
-          onClose={closeCompleted}
-          onNewGame={newGame}
-      />
 
-      <GameOverModal
-          isOpen={isGameOver}
-          onClose={closeGameOver}
-          onNewGame={newGame}
+      <GameCompletionModal isOpen={isCompleted} timeSeconds={timerSeconds} onClose={closeCompleted} onNewGame={newGame} />
+      <GameOverModal isOpen={isGameOver} onClose={closeGameOver} onNewGame={newGame} />
+
+      <PlayerNameModal isOpen={isPlayerNameOpen} onClose={closePlayerName} onSubmit={submitPlayerName} />
+
+      <LeaderboardModal
+        isOpen={isLeaderboardOpen}
+        entries={leaderboard}
+        onClose={closeLeaderboard}
+        onClear={clearLeaderboard}
       />
     </div>
   );
