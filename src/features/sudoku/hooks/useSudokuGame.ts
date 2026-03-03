@@ -5,8 +5,8 @@ import type { Cell, Digit, NotationMode, Position, SudokuGrid } from '@/features
 import useGameTimer from './useGameTimer';
 import { downloadJson, parseSavedGame, pickJsonFile, type SavedGame } from '@/features/sudoku/services/fileManager';
 import type { Difficulty } from '@/features/sudoku/ui/panels/DifficultySelector';
-import { addScore, clearScores, getTopScores, type LeaderboardEntry } from '@/features/sudoku/services/leaderboardLocal';
-
+import { clearScores, type LeaderboardEntry } from '@/features/sudoku/services/leaderboardLocal';
+import { addScore, getTopScores } from '@/features/sudoku/services/leaderboardService';
 type GridHistoryState = {
   grid: SudokuGrid;
   past: SudokuGrid[];
@@ -134,9 +134,10 @@ export default function useSudokuGame(): UseSudokuGameReturn {
   const undo = useCallback(() => dispatch({ type: 'UNDO' }), []);
   const redo = useCallback(() => dispatch({ type: 'REDO' }), []);
 
-  const refreshLeaderboard = useCallback(() => {
-    setLeaderboard(getTopScores(10));
-  }, []);
+  const refreshLeaderboard = useCallback(async () => {
+  const rows = await getTopScores(10);
+  setLeaderboard(rows);
+}, []);
 
   const newGame = useCallback(() => {
     dispatch({ type: 'RESET', next: createMockGrid() });
@@ -264,16 +265,16 @@ export default function useSudokuGame(): UseSudokuGameReturn {
   const openPlayerName = () => setIsPlayerNameOpen(true);
   const closePlayerName = () => setIsPlayerNameOpen(false);
 
-  const submitPlayerName = (name: string) => {
-    addScore({ name, seconds: timer.seconds, difficulty });
-    setLastSavedName(name);
-    setIsPlayerNameOpen(false);
-    refreshLeaderboard();
-  };
+  const submitPlayerName = async (name: string) => {
+  await addScore({ name, seconds: timer.seconds, difficulty });
+  setLastSavedName(name);
+  setIsPlayerNameOpen(false);
+  await refreshLeaderboard();
+};
 
   // Leaderboard modal
   const openLeaderboard = () => {
-    refreshLeaderboard();
+    void refreshLeaderboard();
     setIsLeaderboardOpen(true);
   };
   const closeLeaderboard = () => setIsLeaderboardOpen(false);
