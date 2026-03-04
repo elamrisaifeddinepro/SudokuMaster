@@ -4,11 +4,12 @@ import { formatTime } from '@/features/sudoku/services/leaderboardLocal';
 type Props = {
   isOpen: boolean;
   entries: LeaderboardEntry[];
+  sourceLabel?: string;
   onClose: () => void;
   onClear: () => void;
 };
 
-export default function LeaderboardModal({ isOpen, entries, onClose, onClear }: Props) {
+export default function LeaderboardModal({ isOpen, entries, sourceLabel = 'Local', onClose, onClear }: Props) {
   if (!isOpen) return null;
 
   return (
@@ -19,8 +20,9 @@ export default function LeaderboardModal({ isOpen, entries, onClose, onClear }: 
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-slate-100">🏆 Leaderboard</h2>
-            <p className="mt-1 text-slate-400 text-sm">Top scores (localStorage)</p>
-          </div>
+<p className="mt-1 text-slate-400 text-sm">
+  Source: <b className="text-slate-200">{sourceLabel}</b>
+</p>          </div>
 
           <button
             type="button"

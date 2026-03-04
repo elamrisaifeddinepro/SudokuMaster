@@ -9,6 +9,7 @@ import GameCompletionModal from '@/features/sudoku/ui/modals/GameCompletionModal
 import GameOverModal from '@/features/sudoku/ui/modals/GameOverModal';
 import PlayerNameModal from '@/features/sudoku/ui/modals/PlayerNameModal';
 import LeaderboardModal from '@/features/sudoku/ui/modals/LeaderboardModal';
+import { isSupabaseConfigured } from '@/shared/api/supabaseClient';
 
 function App() {
   const {
@@ -58,7 +59,7 @@ function App() {
   } = useSudokuGame();
 
   const toggleTimer = () => (timerRunning ? pauseTimer() : startTimer());
-
+  
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-6xl px-6 py-10">
@@ -114,6 +115,7 @@ function App() {
       <LeaderboardModal
         isOpen={isLeaderboardOpen}
         entries={leaderboard}
+        sourceLabel={isSupabaseConfigured ? 'Supabase' : 'Local'}
         onClose={closeLeaderboard}
         onClear={clearLeaderboard}
       />
