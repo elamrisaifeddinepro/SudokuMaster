@@ -20,9 +20,10 @@ export default function LeaderboardModal({ isOpen, entries, sourceLabel = 'Local
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-slate-100">🏆 Leaderboard</h2>
-<p className="mt-1 text-slate-400 text-sm">
-  Source: <b className="text-slate-200">{sourceLabel}</b>
-</p>          </div>
+            <p className="mt-1 text-slate-400 text-sm">
+              Source: <b className="text-slate-200">{sourceLabel}</b>
+            </p>
+          </div>
 
           <button
             type="button"
@@ -72,7 +73,7 @@ export default function LeaderboardModal({ isOpen, entries, sourceLabel = 'Local
             onClick={onClear}
             className="h-11 w-full rounded-xl border border-slate-800 bg-red-500/10 text-red-200 font-semibold hover:bg-red-500/15 transition"
           >
-            Clear leaderboard
+            Clear leaderboard (local)
           </button>
         </div>
       </div>

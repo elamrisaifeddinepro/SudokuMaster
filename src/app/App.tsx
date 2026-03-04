@@ -56,6 +56,7 @@ function App() {
     clearLeaderboard,
 
     lastSavedName,
+    defaultPlayerName,
   } = useSudokuGame();
 
   const toggleTimer = () => (timerRunning ? pauseTimer() : startTimer());
@@ -110,15 +111,19 @@ function App() {
       <GameCompletionModal isOpen={isCompleted} timeSeconds={timerSeconds} onClose={closeCompleted} onNewGame={newGame} />
       <GameOverModal isOpen={isGameOver} onClose={closeGameOver} onNewGame={newGame} />
 
-      <PlayerNameModal isOpen={isPlayerNameOpen} onClose={closePlayerName} onSubmit={submitPlayerName} />
-
+<PlayerNameModal
+  isOpen={isPlayerNameOpen}
+  defaultName={defaultPlayerName}
+  onClose={closePlayerName}
+  onSubmit={submitPlayerName}
+/>
       <LeaderboardModal
-        isOpen={isLeaderboardOpen}
-        entries={leaderboard}
-        sourceLabel={isSupabaseConfigured ? 'Supabase' : 'Local'}
-        onClose={closeLeaderboard}
-        onClear={clearLeaderboard}
-      />
+  isOpen={isLeaderboardOpen}
+  entries={leaderboard}
+  sourceLabel={isSupabaseConfigured ? 'Supabase' : 'Local'}
+  onClose={closeLeaderboard}
+  onClear={clearLeaderboard}
+/>
     </div>
   );
 }

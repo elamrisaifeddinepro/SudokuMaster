@@ -2,16 +2,17 @@ import { useEffect, useState } from 'react';
 
 type Props = {
   isOpen: boolean;
+  defaultName?: string;
   onSubmit: (name: string) => void;
   onClose: () => void;
 };
 
-export default function PlayerNameModal({ isOpen, onSubmit, onClose }: Props) {
+export default function PlayerNameModal({ isOpen, defaultName = '', onSubmit, onClose }: Props) {
   const [name, setName] = useState('');
 
   useEffect(() => {
-    if (isOpen) setName('');
-  }, [isOpen]);
+    if (isOpen) setName(defaultName);
+  }, [isOpen, defaultName]);
 
   if (!isOpen) return null;
 

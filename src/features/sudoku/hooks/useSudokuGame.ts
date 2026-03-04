@@ -7,6 +7,7 @@ import { downloadJson, parseSavedGame, pickJsonFile, type SavedGame } from '@/fe
 import type { Difficulty } from '@/features/sudoku/ui/panels/DifficultySelector';
 import { clearScores, type LeaderboardEntry } from '@/features/sudoku/services/leaderboardLocal';
 import { addScore, getTopScores } from '@/features/sudoku/services/leaderboardService';
+import { getLastPlayerName, setLastPlayerName } from '@/features/sudoku/services/playerPrefs';
 type GridHistoryState = {
   grid: SudokuGrid;
   past: SudokuGrid[];
@@ -90,6 +91,7 @@ type UseSudokuGameReturn = {
   clearLeaderboard: () => void;
 
   lastSavedName: string | null;
+  defaultPlayerName: string;
 };
 
 function toggleDigit(list: Digit[], digit: Digit): Digit[] {
@@ -123,6 +125,8 @@ export default function useSudokuGame(): UseSudokuGameReturn {
 
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+
+  const [defaultPlayerName, setDefaultPlayerName] = useState(() => getLastPlayerName());
 
   const conflicts = useMemo(() => getConflictKeys(history.grid), [history.grid]);
 
@@ -267,6 +271,8 @@ export default function useSudokuGame(): UseSudokuGameReturn {
 
   const submitPlayerName = async (name: string) => {
   await addScore({ name, seconds: timer.seconds, difficulty });
+  setLastPlayerName(name);
+  setDefaultPlayerName(name);
   setLastSavedName(name);
   setIsPlayerNameOpen(false);
   await refreshLeaderboard();
@@ -366,5 +372,6 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     clearLeaderboard,
 
     lastSavedName,
+    defaultPlayerName,
   };
 }
