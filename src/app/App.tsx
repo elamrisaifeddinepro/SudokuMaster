@@ -9,6 +9,8 @@ import GameCompletionModal from '@/features/sudoku/ui/modals/GameCompletionModal
 import GameOverModal from '@/features/sudoku/ui/modals/GameOverModal';
 import PlayerNameModal from '@/features/sudoku/ui/modals/PlayerNameModal';
 import LeaderboardModal from '@/features/sudoku/ui/modals/LeaderboardModal';
+
+import StatusCard from '@/features/sudoku/ui/components/StatusCard';
 import { isSupabaseConfigured } from '@/shared/api/supabaseClient';
 
 function App() {
@@ -48,6 +50,7 @@ function App() {
     isPlayerNameOpen,
     closePlayerName,
     submitPlayerName,
+    defaultPlayerName,
 
     isLeaderboardOpen,
     leaderboard,
@@ -56,36 +59,56 @@ function App() {
     clearLeaderboard,
 
     lastSavedName,
-    defaultPlayerName,
   } = useSudokuGame();
 
   const toggleTimer = () => (timerRunning ? pauseTimer() : startTimer());
-  
+  const sourceLabel = isSupabaseConfigured ? 'Supabase' : 'Local';
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-6xl px-6 py-10">
-        <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div className="mx-auto max-w-7xl px-6 py-10">
+        <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">SudokuMaster</h1>
-            <p className="mt-2 text-slate-300">Jour 13 — PlayerName + Leaderboard (local)</p>
-            {lastSavedName && <p className="mt-1 text-sm text-emerald-200">Score enregistré pour: {lastSavedName}</p>}
+            <p className="mt-2 text-slate-300">Jour 17 — UI polish</p>
+            <p className="mt-1 text-sm text-slate-400">
+              Leaderboard source: <b className="text-slate-200">{sourceLabel}</b>
+            </p>
           </div>
           <GameTimer seconds={timerSeconds} isRunning={timerRunning} />
         </header>
 
-        <main className="grid gap-6 lg:grid-cols-[1fr_360px] items-start">
-          <div className="flex flex-col items-center gap-4">
-            <SudokuGrid grid={grid} selected={selected} conflicts={conflicts} onCellClick={selectCell} />
-
-            <div className="w-full rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
-              <h2 className="text-lg font-semibold">Infos</h2>
-              <p className="mt-2 text-slate-300">
-                Mode: <b>{mode}</b> — Difficulty: <b>{difficulty}</b> — Cellule:{' '}
-                <b>{selected ? `(${selected.row}, ${selected.col})` : 'Aucune'}</b> — Conflits: <b>{conflicts.size}</b>
-              </p>
+        <main className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_420px] items-start">
+          {/* LEFT */}
+          <div className="flex flex-col gap-6">
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-semibold">Board</h2>
+                  <p className="text-sm text-slate-400">Clique une cellule puis utilise le keypad ou le clavier.</p>
+                </div>
+                <div className="text-sm text-slate-400">
+                  Conflicts: <b className="text-slate-100">{conflicts.size}</b>
+                </div>
+              </div>
+              <div className="flex justify-center">
+                <SudokuGrid grid={grid} selected={selected} conflicts={conflicts} onCellClick={selectCell} />
+              </div>
             </div>
+
+            <StatusCard
+              mode={mode}
+              difficulty={difficulty}
+              selected={selected}
+              conflictsCount={conflicts.size}
+              timerSeconds={timerSeconds}
+              timerRunning={timerRunning}
+              leaderboardSourceLabel={sourceLabel}
+              lastSavedName={lastSavedName}
+            />
           </div>
 
+          {/* RIGHT */}
           <div className="flex flex-col gap-6">
             <DifficultySelector difficulty={difficulty} onChange={setDifficulty} />
 
@@ -111,19 +134,15 @@ function App() {
       <GameCompletionModal isOpen={isCompleted} timeSeconds={timerSeconds} onClose={closeCompleted} onNewGame={newGame} />
       <GameOverModal isOpen={isGameOver} onClose={closeGameOver} onNewGame={newGame} />
 
-<PlayerNameModal
-  isOpen={isPlayerNameOpen}
-  defaultName={defaultPlayerName}
-  onClose={closePlayerName}
-  onSubmit={submitPlayerName}
-/>
+      <PlayerNameModal isOpen={isPlayerNameOpen} defaultName={defaultPlayerName} onClose={closePlayerName} onSubmit={submitPlayerName} />
+
       <LeaderboardModal
-  isOpen={isLeaderboardOpen}
-  entries={leaderboard}
-  sourceLabel={isSupabaseConfigured ? 'Supabase' : 'Local'}
-  onClose={closeLeaderboard}
-  onClear={clearLeaderboard}
-/>
+        isOpen={isLeaderboardOpen}
+        entries={leaderboard}
+        sourceLabel={sourceLabel}
+        onClose={closeLeaderboard}
+        onClear={clearLeaderboard}
+      />
     </div>
   );
 }
