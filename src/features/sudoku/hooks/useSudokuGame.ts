@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { cloneGrid, createMockGrid, sortDigits } from '@/features/sudoku/model/gridFactory';
+import { cloneGrid as cloneSudokuGrid, sortDigits } from '@/features/sudoku/model/gridFactory';
 import { getConflictKeys } from '@/features/sudoku/model/sudokuValidator';
 import type { Cell, Digit, NotationMode, Position, SudokuGrid } from '@/features/sudoku/model/types';
 import useGameTimer from './useGameTimer';
 import { downloadJson, parseSavedGame, pickJsonFile, type SavedGame } from '@/features/sudoku/services/fileManager';
+
 import type { Difficulty } from '@/features/sudoku/ui/panels/DifficultySelector';
+import { createPuzzleGrid } from '@/features/sudoku/model/sudokuGenerator';
+
 import { clearScores, type LeaderboardEntry } from '@/features/sudoku/services/leaderboardLocal';
 import { addScore, getTopScores } from '@/features/sudoku/services/leaderboardService';
 import { getLastPlayerName, setLastPlayerName } from '@/features/sudoku/services/playerPrefs';
+
 type GridHistoryState = {
   grid: SudokuGrid;
   past: SudokuGrid[];
@@ -72,17 +76,15 @@ type UseSudokuGameReturn = {
   saveGame: () => void;
   loadGame: () => Promise<void>;
 
-  // Jour 12 modals
   isCompleted: boolean;
   isGameOver: boolean;
   closeCompleted: () => void;
   closeGameOver: () => void;
 
-  // Jour 13
   isPlayerNameOpen: boolean;
-  openPlayerName: () => void;
   closePlayerName: () => void;
-  submitPlayerName: (name: string) => void;
+  submitPlayerName: (name: string) => Promise<void>;
+  defaultPlayerName: string;
 
   isLeaderboardOpen: boolean;
   leaderboard: LeaderboardEntry[];
@@ -91,7 +93,6 @@ type UseSudokuGameReturn = {
   clearLeaderboard: () => void;
 
   lastSavedName: string | null;
-  defaultPlayerName: string;
 };
 
 function toggleDigit(list: Digit[], digit: Digit): Digit[] {
@@ -101,35 +102,29 @@ function toggleDigit(list: Digit[], digit: Digit): Digit[] {
 }
 
 function isGridFull(grid: SudokuGrid) {
-  for (const row of grid) {
-    for (const cell of row) {
-      if (cell.value === null) return false;
-    }
-  }
+  for (const row of grid) for (const cell of row) if (cell.value === null) return false;
   return true;
 }
 
 export default function useSudokuGame(): UseSudokuGameReturn {
-  const initial = useMemo(() => createMockGrid(), []);
+  const [difficultyState, setDifficultyState] = useState<Difficulty>('easy');
+  const initial = useMemo(() => createPuzzleGrid('easy'), []);
 
   const [history, dispatch] = useReducer(gridReducer, { grid: initial, past: [], future: [] });
   const [selected, setSelected] = useState<Position | null>(null);
   const [mode, setMode] = useState<NotationMode>('value');
-  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
 
   const [isCompleted, setIsCompleted] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
 
   const [isPlayerNameOpen, setIsPlayerNameOpen] = useState(false);
   const [lastSavedName, setLastSavedName] = useState<string | null>(null);
+  const [defaultPlayerName, setDefaultPlayerName] = useState(() => getLastPlayerName());
 
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
-  const [defaultPlayerName, setDefaultPlayerName] = useState(() => getLastPlayerName());
-
   const conflicts = useMemo(() => getConflictKeys(history.grid), [history.grid]);
-
   const timer = useGameTimer();
 
   const canUndo = history.past.length > 0;
@@ -139,12 +134,11 @@ export default function useSudokuGame(): UseSudokuGameReturn {
   const redo = useCallback(() => dispatch({ type: 'REDO' }), []);
 
   const refreshLeaderboard = useCallback(async () => {
-  const rows = await getTopScores(10);
-  setLeaderboard(rows);
-}, []);
+    const rows = await getTopScores(10);
+    setLeaderboard(rows);
+  }, []);
 
-  const newGame = useCallback(() => {
-    dispatch({ type: 'RESET', next: createMockGrid() });
+  const resetRunState = useCallback(() => {
     setSelected(null);
     setMode('value');
     setIsCompleted(false);
@@ -155,6 +149,20 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     timer.start();
   }, [timer]);
 
+  const newGame = useCallback(() => {
+    dispatch({ type: 'RESET', next: createPuzzleGrid(difficultyState) });
+    resetRunState();
+  }, [difficultyState, resetRunState]);
+
+  const setDifficulty = useCallback(
+    (d: Difficulty) => {
+      setDifficultyState(d);
+      dispatch({ type: 'RESET', next: createPuzzleGrid(d) });
+      resetRunState();
+    },
+    [resetRunState]
+  );
+
   const selectCell = useCallback((cell: Cell) => setSelected({ row: cell.row, col: cell.col }), []);
 
   const inputDigit = useCallback(
@@ -164,7 +172,7 @@ export default function useSudokuGame(): UseSudokuGameReturn {
       const current = history.grid[selected.row][selected.col];
       if (current.given) return;
 
-      const next = cloneGrid(history.grid);
+      const next = cloneSudokuGrid(history.grid);
       const cell = next[selected.row][selected.col];
 
       if (mode === 'value') {
@@ -193,7 +201,7 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     const current = history.grid[selected.row][selected.col];
     if (current.given) return;
 
-    const next = cloneGrid(history.grid);
+    const next = cloneSudokuGrid(history.grid);
     const cell = next[selected.row][selected.col];
 
     if (mode === 'value') {
@@ -211,7 +219,7 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     dispatch({ type: 'APPLY', next });
   }, [history.grid, selected, mode]);
 
-  // Save/Load
+  // Save/Load JSON
   const saveGame = useCallback(() => {
     const payload: SavedGame = {
       version: 1,
@@ -236,6 +244,8 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     setLastSavedName(null);
 
     timer.pause();
+    // si tu as setSeconds, tu peux remettre le timer exact ici :
+    // timer.setSeconds(parsed.timerSeconds);
     timer.reset();
     timer.start();
   }, [timer]);
@@ -250,7 +260,6 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     if (full && !hasConflicts) {
       setIsCompleted(true);
       timer.pause();
-      // ouvrir le modal de nom pour enregistrer le score
       setIsPlayerNameOpen(true);
       return;
     }
@@ -265,18 +274,19 @@ export default function useSudokuGame(): UseSudokuGameReturn {
   const closeCompleted = () => setIsCompleted(false);
   const closeGameOver = () => setIsGameOver(false);
 
-  // PlayerName modal
-  const openPlayerName = () => setIsPlayerNameOpen(true);
+  // Player name / save score
   const closePlayerName = () => setIsPlayerNameOpen(false);
 
   const submitPlayerName = async (name: string) => {
-  await addScore({ name, seconds: timer.seconds, difficulty });
-  setLastPlayerName(name);
-  setDefaultPlayerName(name);
-  setLastSavedName(name);
-  setIsPlayerNameOpen(false);
-  await refreshLeaderboard();
-};
+    await addScore({ name, seconds: timer.seconds, difficulty: difficultyState });
+    setLastSavedName(name);
+
+    setLastPlayerName(name);
+    setDefaultPlayerName(name);
+
+    setIsPlayerNameOpen(false);
+    await refreshLeaderboard();
+  };
 
   // Leaderboard modal
   const openLeaderboard = () => {
@@ -286,7 +296,7 @@ export default function useSudokuGame(): UseSudokuGameReturn {
   const closeLeaderboard = () => setIsLeaderboardOpen(false);
   const clearLeaderboard = () => {
     clearScores();
-    refreshLeaderboard();
+    void refreshLeaderboard();
   };
 
   // Keyboard
@@ -332,7 +342,7 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     mode,
     setMode,
 
-    difficulty,
+    difficulty: difficultyState,
     setDifficulty,
 
     canUndo,
@@ -361,9 +371,9 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     closeGameOver,
 
     isPlayerNameOpen,
-    openPlayerName,
     closePlayerName,
     submitPlayerName,
+    defaultPlayerName,
 
     isLeaderboardOpen,
     leaderboard,
@@ -372,6 +382,5 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     clearLeaderboard,
 
     lastSavedName,
-    defaultPlayerName,
   };
 }
