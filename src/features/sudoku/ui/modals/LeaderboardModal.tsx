@@ -1,3 +1,4 @@
+
 import type { LeaderboardEntry } from '@/features/sudoku/services/leaderboardLocal';
 import { formatTime } from '@/features/sudoku/services/leaderboardLocal';
 
@@ -6,7 +7,7 @@ type Props = {
   entries: LeaderboardEntry[];
   sourceLabel?: string;
   onClose: () => void;
-  onClear: () => void;
+  onClear: () => void; // clears local only
 };
 
 export default function LeaderboardModal({ isOpen, entries, sourceLabel = 'Local', onClose, onClear }: Props) {
@@ -45,6 +46,7 @@ export default function LeaderboardModal({ isOpen, entries, sourceLabel = 'Local
                 <th className="py-2 text-left">Date</th>
               </tr>
             </thead>
+
             <tbody className="text-slate-200">
               {entries.length === 0 ? (
                 <tr>
@@ -73,8 +75,12 @@ export default function LeaderboardModal({ isOpen, entries, sourceLabel = 'Local
             onClick={onClear}
             className="h-11 w-full rounded-xl border border-slate-800 bg-red-500/10 text-red-200 font-semibold hover:bg-red-500/15 transition"
           >
-            Clear leaderboard (local)
+            Clear leaderboard (local only)
           </button>
+
+          <p className="mt-2 text-xs text-slate-400">
+            Supabase scores are not deleted from the app. Use the admin script (D20) if needed.
+          </p>
         </div>
       </div>
     </div>

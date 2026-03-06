@@ -191,8 +191,7 @@ export function createUniquePuzzleGrid(difficulty: Difficulty): UniqueResult {
 
   // If we couldn't reach target, still return what we achieved (unique best-effort)
   const resultGivens = countGivensNums(puzzle);
-  return { grid: toSudokuGrid(puzzle), givens: resultGivens, unique: true };
-}
+    return { grid: toSudokuGrid(puzzle), givens: resultGivens, unique };}
 
 // Backward-compatible: just return a puzzle grid (may be non-unique)
 export function createPuzzleGrid(difficulty: Difficulty): SudokuGrid {
