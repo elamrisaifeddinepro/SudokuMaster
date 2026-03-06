@@ -59,6 +59,9 @@ function App() {
     clearLeaderboard,
 
     lastSavedName,
+
+    givensCount,
+    newPuzzle,
   } = useSudokuGame();
 
   const toggleTimer = () => (timerRunning ? pauseTimer() : startTimer());
@@ -70,7 +73,7 @@ function App() {
         <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">SudokuMaster</h1>
-            <p className="mt-2 text-slate-300">Jour 17 — UI polish</p>
+            <p className="mt-2 text-slate-300">Jour 19 — Unique puzzle + restart/new puzzle + givens stats</p>
             <p className="mt-1 text-sm text-slate-400">
               Leaderboard source: <b className="text-slate-200">{sourceLabel}</b>
             </p>
@@ -97,6 +100,7 @@ function App() {
             </div>
 
             <StatusCard
+              givensCount={givensCount}
               mode={mode}
               difficulty={difficulty}
               selected={selected}
@@ -113,6 +117,7 @@ function App() {
             <DifficultySelector difficulty={difficulty} onChange={setDifficulty} />
 
             <ControlPanel
+              onNewPuzzle={newPuzzle}
               canUndo={canUndo}
               canRedo={canRedo}
               onUndo={undo}

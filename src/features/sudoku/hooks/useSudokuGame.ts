@@ -6,7 +6,7 @@ import useGameTimer from './useGameTimer';
 import { downloadJson, parseSavedGame, pickJsonFile, type SavedGame } from '@/features/sudoku/services/fileManager';
 
 import type { Difficulty } from '@/features/sudoku/ui/panels/DifficultySelector';
-import { createPuzzleGrid } from '@/features/sudoku/model/sudokuGenerator';
+import { createUniquePuzzleGrid } from '@/features/sudoku/model/sudokuGenerator';
 
 import { clearScores, type LeaderboardEntry } from '@/features/sudoku/services/leaderboardLocal';
 import { addScore, getTopScores } from '@/features/sudoku/services/leaderboardService';
@@ -56,12 +56,15 @@ type UseSudokuGameReturn = {
   difficulty: Difficulty;
   setDifficulty: (d: Difficulty) => void;
 
+  givensCount: number;
+
   canUndo: boolean;
   canRedo: boolean;
   undo: () => void;
   redo: () => void;
 
-  newGame: () => void;
+  newGame: () => void;    // restart same puzzle
+  newPuzzle: () => void;  // generate new puzzle
 
   timerSeconds: number;
   timerRunning: boolean;
@@ -108,9 +111,13 @@ function isGridFull(grid: SudokuGrid) {
 
 export default function useSudokuGame(): UseSudokuGameReturn {
   const [difficultyState, setDifficultyState] = useState<Difficulty>('easy');
-  const initial = useMemo(() => createPuzzleGrid('easy'), []);
 
-  const [history, dispatch] = useReducer(gridReducer, { grid: initial, past: [], future: [] });
+  const initialPack = useMemo(() => createUniquePuzzleGrid('easy'), []);
+  const [puzzleSeed, setPuzzleSeed] = useState<SudokuGrid>(initialPack.grid);
+  const [givensCount, setGivensCount] = useState<number>(initialPack.givens);
+
+  const [history, dispatch] = useReducer(gridReducer, { grid: initialPack.grid, past: [], future: [] });
+
   const [selected, setSelected] = useState<Position | null>(null);
   const [mode, setMode] = useState<NotationMode>('value');
 
@@ -149,15 +156,27 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     timer.start();
   }, [timer]);
 
-  const newGame = useCallback(() => {
-    dispatch({ type: 'RESET', next: createPuzzleGrid(difficultyState) });
+  const newPuzzle = useCallback(() => {
+    const pack = createUniquePuzzleGrid(difficultyState);
+    setPuzzleSeed(pack.grid);
+    setGivensCount(pack.givens);
+    dispatch({ type: 'RESET', next: pack.grid });
     resetRunState();
   }, [difficultyState, resetRunState]);
+
+  // Restart same puzzle seed
+  const newGame = useCallback(() => {
+    dispatch({ type: 'RESET', next: puzzleSeed });
+    resetRunState();
+  }, [puzzleSeed, resetRunState]);
 
   const setDifficulty = useCallback(
     (d: Difficulty) => {
       setDifficultyState(d);
-      dispatch({ type: 'RESET', next: createPuzzleGrid(d) });
+      const pack = createUniquePuzzleGrid(d);
+      setPuzzleSeed(pack.grid);
+      setGivensCount(pack.givens);
+      dispatch({ type: 'RESET', next: pack.grid });
       resetRunState();
     },
     [resetRunState]
@@ -244,8 +263,6 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     setLastSavedName(null);
 
     timer.pause();
-    // si tu as setSeconds, tu peux remettre le timer exact ici :
-    // timer.setSeconds(parsed.timerSeconds);
     timer.reset();
     timer.start();
   }, [timer]);
@@ -345,12 +362,15 @@ export default function useSudokuGame(): UseSudokuGameReturn {
     difficulty: difficultyState,
     setDifficulty,
 
+    givensCount,
+
     canUndo,
     canRedo,
     undo,
     redo,
 
     newGame,
+    newPuzzle,
 
     timerSeconds: timer.seconds,
     timerRunning: timer.isRunning,

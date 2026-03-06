@@ -5,6 +5,7 @@ type Props = {
   difficulty: string;
   selected: Position | null;
   conflictsCount: number;
+  givensCount: number;
   timerSeconds: number;
   timerRunning: boolean;
   leaderboardSourceLabel: string;
@@ -26,6 +27,7 @@ export default function StatusCard({
   difficulty,
   selected,
   conflictsCount,
+  givensCount,
   timerSeconds,
   timerRunning,
   leaderboardSourceLabel,
@@ -67,6 +69,11 @@ export default function StatusCard({
         <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3">
           <div className="text-slate-400">Conflicts</div>
           <div className="font-semibold text-slate-100">{conflictsCount}</div>
+        </div>
+
+        <div className="col-span-2 rounded-xl border border-slate-800 bg-slate-950/40 p-3">
+          <div className="text-slate-400">Givens</div>
+          <div className="font-semibold text-slate-100">{givensCount} / 81</div>
         </div>
       </div>
 

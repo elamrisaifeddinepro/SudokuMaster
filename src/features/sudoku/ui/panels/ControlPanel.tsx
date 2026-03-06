@@ -4,7 +4,8 @@ type Props = {
   onUndo: () => void;
   onRedo: () => void;
 
-  onNewGame: () => void;
+  onNewGame: () => void;     // restart same puzzle
+  onNewPuzzle: () => void;   // generate new puzzle
 
   timerRunning: boolean;
   onToggleTimer: () => void;
@@ -30,6 +31,7 @@ export default function ControlPanel({
   onUndo,
   onRedo,
   onNewGame,
+  onNewPuzzle,
   timerRunning,
   onToggleTimer,
   onResetTimer,
@@ -50,9 +52,12 @@ export default function ControlPanel({
         </button>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3 grid grid-cols-2 gap-2">
         <button type="button" onClick={onNewGame} className={btn('bg-cyan-500/15 text-cyan-200')}>
-          New Game
+          Restart
+        </button>
+        <button type="button" onClick={onNewPuzzle} className={btn('bg-purple-500/10 text-purple-200')}>
+          New Puzzle
         </button>
       </div>
 
@@ -75,7 +80,7 @@ export default function ControlPanel({
       </div>
 
       <div className="mt-4">
-        <button type="button" onClick={onOpenLeaderboard} className={btn('bg-purple-500/10 text-purple-200')}>
+        <button type="button" onClick={onOpenLeaderboard} className={btn('bg-slate-950/50 text-slate-100')}>
           Leaderboard
         </button>
       </div>
