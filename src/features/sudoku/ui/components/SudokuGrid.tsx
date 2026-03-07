@@ -1,38 +1,42 @@
-import type { Cell, Position, SudokuGrid } from '@/features/sudoku/model/types';
-import SudokuCell from './SudokuCell';
+import React from 'react';
+import { SudokuCell } from './SudokuCell';
+import { GridState } from '@/features/sudoku/model/types';
 
-type Props = {
-  grid: SudokuGrid;
-  selected?: Position | null;
-  conflicts?: Set<string>;
-  onCellClick?: (cell: Cell) => void;
-};
-
-function borderClasses(row: number, col: number) {
-  const top = row % 3 === 0 ? 'border-t-2' : '';
-  const left = col % 3 === 0 ? 'border-l-2' : '';
-  const right = col === 8 ? 'border-r-2' : '';
-  const bottom = row === 8 ? 'border-b-2' : '';
-  return [top, left, right, bottom, 'border-slate-600'].filter(Boolean).join(' ');
+interface SudokuGridProps {
+  gridState: GridState;
+  onCellClick: (row: number, col: number) => void;
+  onCellDoubleClick: (row: number, col: number) => void;
 }
 
-export default function SudokuGrid({ grid, selected, conflicts, onCellClick }: Props) {
-  const key = (r: number, c: number) => `${r}-${c}`;
+export const SudokuGrid: React.FC<SudokuGridProps> = ({
+  gridState,
+  onCellClick,
+  onCellDoubleClick
+}) => {
+  const isCellSelected = (row: number, col: number): boolean => {
+    return gridState.selectedCells.some(cell => cell.row === row && cell.col === col);
+  };
+
+  const isCellError = (row: number, col: number): boolean => {
+    return gridState.errors.some(error => error.row === row && error.col === col);
+  };
 
   return (
-    <div className="inline-block rounded-xl bg-slate-950 p-2 border border-slate-800">
-      <div className="grid grid-cols-9 gap-0">
-        {grid.flat().map((cell) => {
-          const isSelected = !!selected && cell.row === selected.row && cell.col === selected.col;
-          const isError = !!conflicts && conflicts.has(key(cell.row, cell.col));
-
-          return (
-            <div key={`${cell.row}-${cell.col}`} className={borderClasses(cell.row, cell.col)}>
-              <SudokuCell cell={cell} isSelected={isSelected} isError={isError} onClick={onCellClick} />
-            </div>
-          );
-        })}
+    <div className="inline-block app-surface rounded-3xl p-4 shadow-2xl border border-slate-700">
+      <div className="grid grid-cols-9 gap-0 app-surface-strong p-3 rounded-2xl border border-slate-700">
+        {gridState.grid.cells.map((row, rowIndex) =>
+          row.map((cell, colIndex) => (
+            <SudokuCell
+              key={`${rowIndex}-${colIndex}`}
+              cell={cell}
+              isSelected={isCellSelected(rowIndex, colIndex)}
+              hasError={isCellError(rowIndex, colIndex)}
+              onClick={() => onCellClick(rowIndex, colIndex)}
+              onDoubleClick={() => onCellDoubleClick(rowIndex, colIndex)}
+            />
+          ))
+        )}
       </div>
     </div>
   );
-}
+};

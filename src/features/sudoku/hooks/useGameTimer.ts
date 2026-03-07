@@ -1,42 +1,62 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-type TimerControls = {
-  seconds: number;
-  isRunning: boolean;
-  start: () => void;
-  pause: () => void;
-  reset: () => void;
-  setSeconds: (s: number) => void;
-};
+export const useGameTimer = () => {
+  const [seconds, setSeconds] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  // Browser-friendly type (works in Vite/TS without Node typings assumptions)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-export default function useGameTimer(): TimerControls {
-  const [seconds, _setSeconds] = useState(0);
-  const [isRunning, setIsRunning] = useState(true);
-  const intervalRef = useRef<number | null>(null);
+  // Memoized callbacks to keep stable references (prevents useEffect loops in consumers)
+  const startTimer = useCallback(() => {
+    setIsRunning(true);
+  }, []);
 
-  const clear = () => {
-    if (intervalRef.current !== null) {
-      window.clearInterval(intervalRef.current);
+  const stopTimer = useCallback(() => {
+    setIsRunning(false);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-  };
+  }, []);
+
+  const resetTimer = useCallback(() => {
+    setSeconds(0);
+    setIsRunning(false);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  const pauseTimer = useCallback(() => {
+    setIsRunning(false);
+  }, []);
 
   useEffect(() => {
-    clear();
-
     if (isRunning) {
-      intervalRef.current = window.setInterval(() => {
-        _setSeconds((s) => s + 1);
+      intervalRef.current = setInterval(() => {
+        setSeconds(prev => prev + 1);
       }, 1000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     }
 
-    return () => clear();
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, [isRunning]);
 
-  const start = () => setIsRunning(true);
-  const pause = () => setIsRunning(false);
-  const reset = () => _setSeconds(0);
-  const setSeconds = (s: number) => _setSeconds(Math.max(0, Math.floor(s)));
-
-  return { seconds, isRunning, start, pause, reset, setSeconds };
-}
+  return {
+    seconds,
+    isRunning,
+    startTimer,
+    stopTimer,
+    resetTimer,
+    pauseTimer
+  };
+};

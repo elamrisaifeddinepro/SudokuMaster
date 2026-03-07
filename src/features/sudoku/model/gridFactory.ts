@@ -1,50 +1,92 @@
-import type { Cell, CellValue, ColIndex, Digit, RowIndex, SudokuGrid } from './types';
+import { Cell, SudokuGrid } from '@/features/sudoku/model/types';
+import { SudokuGenerator } from './sudokuGenerator';
 
-const ROWS: RowIndex[] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-const COLS: ColIndex[] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-
-export function createEmptyGrid(): SudokuGrid {
-  return ROWS.map((r) =>
-    COLS.map((c) => ({
-      row: r,
-      col: c,
+export class GridFactory {
+  static createEmptyGrid(): SudokuGrid {
+    const cells: Cell[][] = [];
+    
+    for (let row = 0; row < 9; row++) {
+      cells[row] = [];
+      for (let col = 0; col < 9; col++) {
+        cells[row][col] = this.createEmptyCell(row, col);
+      }
+    }
+    
+    return { cells };
+  }
+  
+  static createEmptyCell(row: number, col: number): Cell {
+    return {
+      row,
+      col,
       value: null,
-      given: false,
       cornerNotes: [],
       centerNotes: [],
-    }))
-  );
-}
-
-/** Grille mock pour tester l’UI (le vrai générateur viendra plus tard) */
-export function createMockGrid(): SudokuGrid {
-  const grid = createEmptyGrid();
-
-  setCellValue(grid, 0, 0, 5, true);
-  setCellValue(grid, 0, 1, 3, true);
-  setCellValue(grid, 1, 0, 6, true);
-  setCellValue(grid, 4, 4, 7, true);
-  setCellValue(grid, 8, 8, 9, true);
-
-  return grid;
-}
-
-function setCellValue(
-  grid: SudokuGrid,
-  row: RowIndex,
-  col: ColIndex,
-  value: Exclude<CellValue, null>,
-  given: boolean
-) {
-  const current = grid[row][col];
-  const cell: Cell = { ...current, value, given, cornerNotes: [], centerNotes: [] };
-  grid[row][col] = cell;
-}
-
-export function cloneGrid(grid: SudokuGrid): SudokuGrid {
-  return grid.map((row) => row.map((cell) => ({ ...cell, cornerNotes: [...cell.cornerNotes], centerNotes: [...cell.centerNotes] })));
-}
-
-export function sortDigits(digits: Digit[]): Digit[] {
-  return [...digits].sort((a, b) => a - b);
+      color: null
+    };
+  }
+  
+  static updateCell(cell: Cell, updates: Partial<Omit<Cell, 'row' | 'col'>>): Cell {
+    return {
+      ...cell,
+      ...updates
+    };
+  }
+  
+  static updateGrid(grid: SudokuGrid, row: number, col: number, updates: Partial<Omit<Cell, 'row' | 'col'>>): SudokuGrid {
+    const newCells = grid.cells.map((rowCells, r) =>
+      rowCells.map((cell, c) =>
+        r === row && c === col ? this.updateCell(cell, updates) : cell
+      )
+    );
+    
+    return { cells: newCells };
+  }
+  
+  static updateMultipleCells(
+    grid: SudokuGrid, 
+    positions: { row: number; col: number }[], 
+    updates: Partial<Omit<Cell, 'row' | 'col'>>
+  ): SudokuGrid {
+    const positionSet = new Set(positions.map(p => `${p.row},${p.col}`));
+    
+    const newCells = grid.cells.map((rowCells, r) =>
+      rowCells.map((cell, c) =>
+        positionSet.has(`${r},${c}`) ? this.updateCell(cell, updates) : cell
+      )
+    );
+    
+    return { cells: newCells };
+  }
+  
+  static createGridFromNumbers(numbers: number[][]): SudokuGrid {
+    const cells: Cell[][] = [];
+    
+    for (let row = 0; row < 9; row++) {
+      cells[row] = [];
+      for (let col = 0; col < 9; col++) {
+        const value = numbers[row][col] === 0 ? null : numbers[row][col];
+        cells[row][col] = {
+          row,
+          col,
+          value,
+          cornerNotes: [],
+          centerNotes: [],
+          color: null
+        };
+      }
+    }
+    
+    return { cells };
+  }
+  
+  static generatePuzzle(difficulty: string = 'moyen'): SudokuGrid {
+    const { puzzle } = SudokuGenerator.generatePuzzle(difficulty);
+    return this.createGridFromNumbers(puzzle);
+  }
+  
+  static generateSamplePuzzle(): SudokuGrid {
+    const { puzzle } = SudokuGenerator.generateSamplePuzzle();
+    return this.createGridFromNumbers(puzzle);
+  }
 }

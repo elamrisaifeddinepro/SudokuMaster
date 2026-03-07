@@ -1,44 +1,107 @@
-import { supabase, isSupabaseConfigured } from '@/shared/api/supabaseClient';
-import { addScore as addLocal, getTopScores as getLocal, type LeaderboardEntry } from './leaderboardLocal';
+import { supabase } from '@/shared/api/supabaseClient';
 
-const TABLE = 'leaderboard'; // table Supabase
-
-export async function addScore(entry: Omit<LeaderboardEntry, 'id' | 'createdAt'>): Promise<void> {
-  if (!isSupabaseConfigured || !supabase) {
-    addLocal(entry);
-    return;
-  }
-
-  const { error } = await supabase.from(TABLE).insert({
-    player_name: entry.name,
-    seconds: entry.seconds,
-    difficulty: entry.difficulty,
-  });
-
-  if (error) {
-    // fallback local si Supabase échoue
-    addLocal(entry);
-  }
+export interface LeaderboardEntry {
+  id?: number;
+  player_name: string;
+  difficulty: string;
+  completion_time: number;
+  error_count: number;
+  created_at?: string;
 }
 
-export async function getTopScores(limit = 10): Promise<LeaderboardEntry[]> {
-  if (!isSupabaseConfigured || !supabase) {
-    return getLocal(limit);
+export class LeaderboardService {
+  static async addScore(
+    entry: Omit<LeaderboardEntry, 'id' | 'created_at'>
+  ): Promise<LeaderboardEntry | null> {
+    try {
+      const { data, error } = await supabase
+        .from('leaderboard')
+        .insert([entry])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding score:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Unexpected error adding score:', error);
+      return null;
+    }
   }
 
-  const { data, error } = await supabase
-    .from(TABLE)
-    .select('id, player_name, seconds, difficulty, created_at')
-    .order('seconds', { ascending: true })
-    .limit(limit);
+  static async getTopScores(difficulty: string, limit = 10): Promise<LeaderboardEntry[]> {
+    try {
+      const { data, error } = await supabase
+        .from('leaderboard')
+        .select('*')
+        .eq('difficulty', difficulty)
+        .order('completion_time', { ascending: true })
+        .order('error_count', { ascending: true })
+        .limit(limit);
 
-  if (error || !data) return getLocal(limit);
+      if (error) {
+        console.error('Error fetching scores:', error);
+        return [];
+      }
 
-  return data.map((r) => ({
-    id: String(r.id),
-    name: String(r.player_name),
-    seconds: Number(r.seconds),
-    difficulty: r.difficulty as LeaderboardEntry['difficulty'],
-    createdAt: String(r.created_at),
-  }));
+      return data || [];
+    } catch (error) {
+      console.error('Unexpected error fetching scores:', error);
+      return [];
+    }
+  }
+
+  static async getAllTopScores(limit = 50): Promise<LeaderboardEntry[]> {
+    try {
+      const { data, error } = await supabase
+        .from('leaderboard')
+        .select('*')
+        .order('completion_time', { ascending: true })
+        .order('error_count', { ascending: true })
+        .limit(limit);
+
+      if (error) {
+        console.error('Error fetching all scores:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Unexpected error fetching all scores:', error);
+      return [];
+    }
+  }
+
+  static formatTime(totalSeconds: number): string {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+
+    if (hours > 0) return `${hours}h ${minutes}m ${secs}s`;
+    if (minutes > 0) return `${minutes}m ${secs}s`;
+    return `${secs}s`;
+  }
+
+  static getDifficultyEmoji(difficulty: string): string {
+    const emojis: Record<string, string> = {
+      facile: '🟢',
+      moyen: '🟡',
+      difficile: '🟠',
+      expert: '🔴',
+    };
+    return emojis[difficulty] || '⚪';
+  }
+
+  static getDifficultyColor(difficulty: string): string {
+    const colors: Record<string, string> = {
+      facile: 'text-emerald-200 bg-emerald-500/12 border border-emerald-400/30',
+      moyen: 'text-cyan-100 bg-cyan-500/12 border border-cyan-400/30',
+      difficile: 'text-amber-200 bg-amber-500/12 border border-amber-400/30',
+      expert: 'text-rose-200 bg-rose-500/12 border border-rose-400/30',
+    };
+    return colors[difficulty] || 'text-slate-200 bg-slate-950/30 border border-slate-700';
+  }
 }

@@ -1,52 +1,117 @@
-import type { SudokuGrid } from '@/features/sudoku/model/types';
+import { SudokuGrid } from '@/features/sudoku/model/types';
 
-export type SavedGame = {
-  version: 1;
-  savedAt: string; // ISO
+export interface SaveData {
+  version: string;
   grid: SudokuGrid;
-  mode: 'value' | 'corner' | 'center';
-  timerSeconds: number;
-};
-
-export function downloadJson(filename: string, data: unknown) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-
-  URL.revokeObjectURL(url);
+  timestamp: number;
 }
 
-export async function pickJsonFile(): Promise<string | null> {
-  return new Promise((resolve) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json';
-
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return resolve(null);
-
-      const text = await file.text();
-      resolve(text);
+export class FileManager {
+  private static readonly VERSION = '1.0.0';
+  
+  static saveGrid(grid: SudokuGrid): string {
+    const saveData: SaveData = {
+      version: this.VERSION,
+      grid,
+      timestamp: Date.now()
     };
-
-    input.click();
-  });
-}
-
-export function parseSavedGame(raw: string): SavedGame {
-  const obj = JSON.parse(raw) as Partial<SavedGame>;
-
-  if (obj.version !== 1) throw new Error('Unsupported save version');
-  if (!obj.grid || !Array.isArray(obj.grid) || obj.grid.length !== 9) throw new Error('Invalid grid');
-  if (typeof obj.timerSeconds !== 'number') throw new Error('Invalid timerSeconds');
-  if (obj.mode !== 'value' && obj.mode !== 'corner' && obj.mode !== 'center') throw new Error('Invalid mode');
-
-  return obj as SavedGame;
+    
+    return JSON.stringify(saveData, null, 2);
+  }
+  
+  static loadGrid(jsonData: string): SudokuGrid {
+    try {
+      const saveData: SaveData = JSON.parse(jsonData);
+      
+      if (!saveData.version || !saveData.grid) {
+        throw new Error('Invalid save file format');
+      }
+      
+      // Validate grid structure
+      if (!this.isValidGridStructure(saveData.grid)) {
+        throw new Error('Invalid grid data');
+      }
+      
+      return saveData.grid;
+    } catch (error) {
+      throw new Error(`Failed to load grid: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+  
+  private static isValidGridStructure(grid: any): grid is SudokuGrid {
+    if (!grid || !Array.isArray(grid.cells)) {
+      return false;
+    }
+    
+    if (grid.cells.length !== 9) {
+      return false;
+    }
+    
+    for (let row = 0; row < 9; row++) {
+      if (!Array.isArray(grid.cells[row]) || grid.cells[row].length !== 9) {
+        return false;
+      }
+      
+      for (let col = 0; col < 9; col++) {
+        const cell = grid.cells[row][col];
+        if (!this.isValidCell(cell, row, col)) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  }
+  
+  private static isValidCell(cell: any, expectedRow: number, expectedCol: number): boolean {
+    return (
+      cell &&
+      cell.row === expectedRow &&
+      cell.col === expectedCol &&
+      (cell.value === null || (typeof cell.value === 'number' && cell.value >= 1 && cell.value <= 9)) &&
+      Array.isArray(cell.cornerNotes) &&
+      Array.isArray(cell.centerNotes) &&
+      (cell.color === null || typeof cell.color === 'string')
+    );
+  }
+  
+  static downloadFile(content: string, filename: string): void {
+    const blob = new Blob([content], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
+  }
+  
+  static uploadFile(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      
+      input.onchange = (event) => {
+        const file = (event.target as HTMLInputElement).files?.[0];
+        if (!file) {
+          reject(new Error('No file selected'));
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target?.result as string;
+          resolve(content);
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsText(file);
+      };
+      
+      input.click();
+    });
+  }
 }

@@ -1,24 +1,29 @@
-export type Digit = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-export type RowIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-export type ColIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-
-export type CellValue = Digit | null;
-
-export type NotationMode = 'value' | 'corner' | 'center';
-
 export interface Cell {
-  row: RowIndex;
-  col: ColIndex;
-  value: CellValue;
-  given: boolean;
-
-  cornerNotes: Digit[]; // petites notes (coins)
-  centerNotes: Digit[]; // notes au centre
+  readonly row: number;
+  readonly col: number;
+  readonly value: number | null;
+  readonly cornerNotes: readonly number[];
+  readonly centerNotes: readonly number[];
+  readonly color: CellColor | null;
 }
 
-export type SudokuGrid = Cell[][]; // 9x9
+export type CellColor = 
+  | 'red' | 'blue' | 'green' | 'yellow' 
+  | 'purple' | 'orange' | 'pink' | 'cyan' | 'lime';
 
-export interface Position {
-  row: RowIndex;
-  col: ColIndex;
+export interface SudokuGrid {
+  readonly cells: readonly Cell[][];
+}
+
+export interface GridState {
+  readonly grid: SudokuGrid;
+  readonly selectedCells: readonly { row: number; col: number }[];
+  readonly errors: readonly { row: number; col: number }[];
+}
+
+export type NotationMode = 'value' | 'corner' | 'center' | 'color';
+
+export interface Command {
+  execute(): GridState;
+  undo(): GridState;
 }
