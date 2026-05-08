@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sudoku Midnight Neon favicon">
+  <rect width="64" height="64" rx="14" fill="#020617"/>
+  <path d="M12 12h40v40H12z" fill="none" stroke="#22d3ee" stroke-width="3"/>
+  <path d="M25.33 12v40M38.67 12v40M12 25.33h40M12 38.67h40" stroke="#a855f7" stroke-width="1.6" opacity="0.9"/>
+  <path d="M12 25.33h40M12 38.67h40M25.33 12v40M38.67 12v40" stroke="#22d3ee" stroke-width="0.7" opacity="0.6"/>
+  <text x="32" y="39" text-anchor="middle" font-size="19" font-family="Arial, sans-serif" font-weight="700" fill="#f8fafc">9</text>
+</svg>
