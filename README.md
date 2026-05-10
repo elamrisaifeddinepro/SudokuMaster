@@ -5,115 +5,163 @@
 ![Vite](https://img.shields.io/badge/Vite-Build-646CFF?logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?logo=tailwindcss&logoColor=white)
 ![Vitest](https://img.shields.io/badge/Tests-Vitest-6E9F18?logo=vitest&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-Leaderboard-3ECF8E?logo=supabase&logoColor=white)
 
-Jeu de Sudoku en React / TypeScript. Génération de grilles avec solution unique, validation en temps réel, indices, undo/redo, sauvegarde automatique, statistiques, leaderboard Supabase et interface FR/EN.
+**Sudoku Master** est une application web moderne de Sudoku développée avec **React**, **TypeScript**, **Vite**, **Tailwind CSS** et **Supabase**.
+
+Le projet propose une expérience de jeu complète avec génération de grilles à solution unique, validation en temps réel, système d’indices intelligents, undo/redo, sauvegarde automatique, statistiques locales, leaderboard Supabase optionnel et interface bilingue **FR / EN**.
 
 ---
 
 ## Aperçu
 
-> *(captures à ajouter après lancement)*
+> Captures de l’application à ajouter après le lancement local ou le déploiement.
 
 ---
 
-## Fonctionnalités
+## Fonctionnalités principales
 
-**Gameplay**
-- Grille 9×9 interactive, 4 niveaux de difficulté (facile → expert)
-- Génération avec vérification d'unicité de la solution
-- Validation en temps réel par comparaison avec la solution
+### Gameplay
+
+- Grille Sudoku 9×9 interactive
+- 4 niveaux de difficulté : facile, moyen, difficile et expert
+- Génération de grilles avec vérification d’unicité de la solution
+- Validation en temps réel
 - Pause avec masquage de la grille
-- Undo / redo (Command Pattern)
-- Confirmation avant abandon de partie
-- Export / import JSON
+- Undo / Redo basé sur le **Command Pattern**
+- Confirmation avant abandon d’une partie
+- Export / import d’une partie au format JSON
 
-**Notation**
-- Mode valeur, coins, centre et couleur par cellule
+### Notation
 
-**Indices**
-- Singleton nu, singleton caché, élimination, paire nue, paires pointantes
-- Indices bloqués si la grille contient une erreur
+- Mode valeur
+- Notes en coins
+- Notes au centre
+- Marquage par couleur
 
-**Stats & leaderboard**
-- Dashboard local : parties jouées, meilleur temps, temps moyen, taux d'erreurs
-- Leaderboard en ligne via Supabase (optionnel)
+### Système d’indices
 
-**Navigation clavier complète**
-- Flèches, Shift+flèches, Ctrl+clic, touches 1–9, Suppr, P (pause), Échap
+- Singleton nu
+- Singleton caché
+- Élimination
+- Paire nue
+- Paires pointantes
+- Blocage des indices lorsque la grille contient une erreur
+
+### Statistiques & leaderboard
+
+- Dashboard local du joueur
+- Nombre de parties jouées
+- Meilleur temps
+- Temps moyen
+- Taux d’erreurs
+- Leaderboard en ligne via Supabase
+
+### Navigation clavier
+
+- Déplacement avec les flèches
+- Sélection étendue avec Shift + flèches
+- Sélection multiple avec Ctrl + clic
+- Saisie avec les touches 1 à 9
+- Suppression avec Suppr / Backspace
+- Pause avec la touche P
+- Fermeture / annulation avec Échap
 
 ---
 
-## Stack
+## Stack technique
 
-| | |
+| Domaine | Technologies |
 |---|---|
-| Frontend | React 18 + TypeScript |
+| Frontend | React 18, TypeScript |
 | Build | Vite |
 | Styles | Tailwind CSS |
 | Icônes | Lucide React |
 | Tests | Vitest |
-| Backend | Supabase (optionnel) |
-| CI | GitHub Actions |
+| Backend léger | Supabase |
+| Stockage local | localStorage |
+| CI/CD | GitHub Actions |
+| Internationalisation | FR / EN |
 
 ---
 
 ## Installation
 
+Cloner le projet :
+
 ```bash
 git clone https://github.com/elamrisaifeddinepro/SudokuMaster.git
 cd SudokuMaster
+```
+
+Installer les dépendances :
+
+```bash
 npm install
 ```
 
-Copier le fichier d'environnement :
+Copier le fichier d’environnement :
 
 ```bash
 cp .env.example .env
 ```
 
-Sans clés Supabase, le jeu tourne normalement en local. Seul le leaderboard en ligne est désactivé.
+> Sans clés Supabase, le jeu fonctionne normalement en local. Seul le leaderboard en ligne est désactivé.
 
-Lancer :
+Lancer le serveur de développement :
 
 ```bash
 npm run dev
-# http://localhost:5173
+```
+
+Application disponible par défaut sur :
+
+```bash
+http://localhost:5173
 ```
 
 ---
 
-## Scripts
+## Scripts disponibles
 
 ```bash
-npm run dev          # serveur de développement
-npm run build        # build production → dist/
-npm run preview      # prévisualiser le build
-npm run test         # tests unitaires
-npm run test:watch   # tests en mode watch
-npm run lint         # ESLint
-npm run typecheck    # vérification TypeScript
-npm run ci           # typecheck + test + lint + build
+npm run dev          # Lance le serveur de développement
+npm run build        # Génère le build de production dans dist/
+npm run preview      # Prévisualise le build de production
+npm run test         # Lance les tests unitaires
+npm run test:watch   # Lance les tests en mode watch
+npm run lint         # Analyse le code avec ESLint
+npm run typecheck    # Vérifie les types TypeScript
+npm run ci           # Lance typecheck + tests + lint + build
 ```
 
 ---
 
 ## Tests
 
+Lancer les tests unitaires :
+
 ```bash
 npm run test
 ```
 
-Couvrent : génération de grilles, validateur, undo/redo, stockage des stats.
+Les tests couvrent notamment :
+
+- La génération des grilles
+- Le validateur Sudoku
+- Le système undo / redo
+- Le stockage local des statistiques
 
 ---
 
-## Structure
+## Structure du projet
 
-```
+```text
 src/
 ├── app/
 │   ├── App.tsx
-│   └── styles/index.css
+│   └── styles/
+│       └── index.css
 ├── features/
 │   └── sudoku/
 │       ├── hooks/          # useSudokuGame, useGameTimer
@@ -122,36 +170,112 @@ src/
 │       └── ui/             # composants, panels, modals
 └── shared/
     ├── api/                # supabaseClient
-    └── i18n/               # traductions FR/EN
+    └── i18n/               # traductions FR / EN
 ```
 
 ---
 
-## Supabase (optionnel)
+## Supabase
 
-1. Créer un projet sur [supabase.com](https://supabase.com)
-2. Copier `Project URL` et `anon key` dans `.env`
-3. Exécuter la migration dans le SQL Editor :
+Supabase est utilisé pour gérer le leaderboard en ligne. Cette intégration est optionnelle : le jeu reste entièrement jouable sans configuration Supabase.
 
-```
+### Configuration
+
+1. Créer un projet sur [Supabase](https://supabase.com)
+2. Copier le `Project URL` et la `anon key`
+3. Les ajouter dans le fichier `.env`
+4. Exécuter la migration SQL suivante dans le SQL Editor Supabase :
+
+```text
 supabase/migrations/20251114032954_spring_prism.sql
 ```
 
-La table `leaderboard` est créée avec RLS activé — lecture et insertion publiques, pas de modification ni suppression.
+La migration crée la table `leaderboard` avec **RLS activé**.
+
+### Sécurité
+
+La configuration actuelle permet :
+
+- Lecture publique du leaderboard
+- Insertion publique de scores
+- Modification et suppression interdites côté client
+
+Une évolution prévue consiste à ajouter une **Supabase Edge Function** afin de valider les scores côté serveur avant insertion.
 
 ---
 
 ## Déploiement
 
+Générer le build de production :
+
 ```bash
 npm run build
-# déployer le dossier dist/
 ```
 
-Compatible Vercel, Netlify, GitHub Pages. Voir `docs/DEPLOYMENT.md` pour la configuration détaillée.
+Le dossier à déployer est :
+
+```bash
+dist/
+```
+
+Le projet est compatible avec :
+
+- Vercel
+- Netlify
+- GitHub Pages
+- Tout hébergeur statique compatible avec une SPA React
+
+Pour plus de détails, consulter :
+
+```text
+docs/DEPLOYMENT.md
+```
+
+---
+
+## Évolutions prévues
+
+Les prochaines améliorations envisagées sont :
+
+- Mode défi à deux joueurs
+- Duel en temps réel sur la même grille
+- Classement basé sur le temps, les erreurs et les indices utilisés
+- Profil joueur
+- Historique des parties
+- Statistiques avancées
+- Mode tournoi
+- Tests d’intégration avec React Testing Library
+- Tests end-to-end avec Playwright
+- Validation serveur des scores avec Supabase Edge Function
+
+---
+
+## Objectif du projet
+
+Ce projet a été conçu comme un projet portfolio afin de démontrer :
+
+- La maîtrise de React et TypeScript
+- La structuration d’une application frontend moderne
+- La gestion d’une logique métier complexe
+- L’utilisation de patterns comme le Command Pattern
+- L’intégration de tests automatisés
+- L’utilisation d’un backend léger avec Supabase
+- La préparation d’un projet maintenable et évolutif
+
+---
+
+## Auteur
+
+**El Amri Saifeddine**  
+Développeur Full-Stack  
+Étudiant en informatique à l’UQTR  
+En recherche de stage de fin d’études en développement logiciel / web / BI / IA pour l’automne 2026.
+
+GitHub : [elamrisaifeddinepro](https://github.com/elamrisaifeddinepro)  
+LinkedIn : [El Amri Saifeddine](https://www.linkedin.com/in/el-amri-saifeddine-22355225b/)
 
 ---
 
 ## Licence
 
-Usage libre pour portfolio et apprentissage.
+Projet réalisé à des fins de portfolio, d’apprentissage et de démonstration technique.
