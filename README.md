@@ -204,34 +204,6 @@ Une évolution prévue consiste à ajouter une **Supabase Edge Function** afin d
 
 ---
 
-## Déploiement
-
-Générer le build de production :
-
-```bash
-npm run build
-```
-
-Le dossier à déployer est :
-
-```bash
-dist/
-```
-
-Le projet est compatible avec :
-
-- Vercel
-- Netlify
-- GitHub Pages
-- Tout hébergeur statique compatible avec une SPA React
-
-Pour plus de détails, consulter :
-
-```text
-docs/DEPLOYMENT.md
-```
-
----
 
 ## Évolutions prévues
 
@@ -269,7 +241,6 @@ Ce projet a été conçu comme un projet portfolio afin de démontrer :
 **El Amri Saifeddine**  
 Développeur Full-Stack  
 Étudiant en informatique à l’UQTR  
-En recherche de stage de fin d’études en développement logiciel / web / BI / IA pour l’automne 2026.
 
 GitHub : [elamrisaifeddinepro](https://github.com/elamrisaifeddinepro)  
 LinkedIn : [El Amri Saifeddine](https://www.linkedin.com/in/el-amri-saifeddine-22355225b/)
